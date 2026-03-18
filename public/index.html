@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ScottyMd — Web Pairing</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#25d366;--dark-green:#128c7e;--bg:#0d0d0d;--card:#141414;--border:#222;--text:#fff;--muted:#888}
+body{min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.glow{position:fixed;top:-300px;left:-300px;width:700px;height:700px;background:radial-gradient(circle,rgba(37,211,102,.12) 0%,transparent 65%);pointer-events:none;z-index:0}
+.glow2{position:fixed;bottom:-300px;right:-300px;width:600px;height:600px;background:radial-gradient(circle,rgba(37,211,102,.07) 0%,transparent 65%);pointer-events:none;z-index:0}
+.wrap{width:100%;max-width:480px;z-index:1}
+
+/* Header */
+.header{text-align:center;margin-bottom:32px}
+.logo{width:72px;height:72px;background:linear-gradient(135deg,var(--green),var(--dark-green));border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 16px;box-shadow:0 0 40px rgba(37,211,102,.3)}
+.header h1{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.header p{color:var(--muted);font-size:14px;margin-top:6px}
+.status-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);border-radius:30px;padding:5px 14px;font-size:12px;color:var(--green);margin-top:12px}
+.dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+
+/* Steps indicator */
+.steps-nav{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:28px}
+.step-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);transition:color .3s}
+.step-item.active{color:var(--green)}
+.step-item.done{color:var(--green)}
+.step-num{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s}
+.step-item.active .step-num{background:var(--green);border-color:var(--green);color:#000}
+.step-item.done .step-num{background:var(--green);border-color:var(--green);color:#000}
+.step-line{width:40px;height:2px;background:var(--border);margin:0 4px;transition:background .3s}
+.step-line.done{background:var(--green)}
+
+/* Form */
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:500;letter-spacing:.3px}
+.input-wrap{position:relative;margin-bottom:20px}
+.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none}
+input[type=text]{width:100%;background:#1a1a1a;border:1.5px solid var(--border);border-radius:12px;padding:14px 14px 14px 48px;color:var(--text);font-size:15px;outline:none;transition:all .2s}
+input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(37,211,102,.12)}
+input::placeholder{color:#333}
+
+/* Button */
+.btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--green),var(--dark-green));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.btn:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 8px 25px rgba(37,211,102,.3)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn .spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Result */
+#result{margin-top:24px;display:none}
+.code-card{background:linear-gradient(135deg,rgba(37,211,102,.08),rgba(18,140,126,.05));border:1.5px solid rgba(37,211,102,.3);border-radius:16px;padding:28px;text-align:center}
+.code-label{font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:14px}
+.code-val{font-size:40px;font-weight:900;letter-spacing:8px;font-family:'Courier New',monospace;color:#fff;text-shadow:0 0 30px rgba(37,211,102,.5);margin-bottom:18px}
+.copy-btn{display:inline-flex;align-items:center;gap:7px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:9px;padding:9px 18px;color:var(--green);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.copy-btn:hover{background:rgba(37,211,102,.22)}
+
+.how-to{background:#181818;border-radius:12px;padding:16px 18px;margin-top:16px}
+.how-to p{font-size:13px;color:var(--muted);line-height:2}
+.how-to strong{color:#ccc}
+
+.timer{margin-top:12px;text-align:center;font-size:12px;color:#444}
+.timer b{color:#e74c3c}
+
+.error-box{background:rgba(231,76,60,.08);border:1.5px solid rgba(231,76,60,.3);border-radius:12px;padding:14px 16px;color:#e74c3c;font-size:13px;display:flex;align-items:flex-start;gap:10px}
+
+/* Features */
+.features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.feat{background:#181818;border-radius:12px;padding:14px;text-align:center}
+.feat-icon{font-size:22px;margin-bottom:6px}
+.feat-title{font-size:12px;color:#ccc;font-weight:600}
+.feat-desc{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* Footer */
+.footer{text-align:center;margin-top:28px;font-size:12px;color:#333}
+.footer a{color:#444;text-decoration:none}
+.footer a:hover{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<div class="wrap">
+  <div class="header">
+    <div class="logo">🤖</div>
+    <h1>ScottyMd</h1>
+    <p>Professional WhatsApp Bot</p>
+    <div class="status-badge"><div class="dot"></div> Server Online</div>
+  </div>
+
+  <div class="card">
+    <!-- Step indicator -->
+    <div class="steps-nav">
+      <div class="step-item active" id="step1">
+        <div class="step-num">1</div>
+        <span>Number</span>
+      </div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-item" id="step2">
+        <div class="step-num">2</div>
+        <span>Code</span>
+      </div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-item" id="step3">
+        <div class="step-num">3</div>
+        <span>Paired ✓</span>
+      </div>
+    </div>
+
+    <label for="phone">📱 Your WhatsApp Number</label>
+    <div class="input-wrap">
+      <span class="input-icon">🌍</span>
+      <input type="text" id="phone" placeholder="e.g. 263788114185" maxlength="15" inputmode="numeric" autocomplete="off"/>
+    </div>
+    <button class="btn" id="pairBtn" onclick="requestPair()">Get Pairing Code →</button>
+    <div id="result"></div>
+  </div>
+
+  <div class="features">
+    <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">Fast</div><div class="feat-desc">Instant pairing</div></div>
+    <div class="feat"><div class="feat-icon">🔒</div><div class="feat-title">Secure</div><div class="feat-desc">No data stored</div></div>
+    <div class="feat"><div class="feat-icon">🤖</div><div class="feat-title">100+ Commands</div><div class="feat-desc">Always growing</div></div>
+    <div class="feat"><div class="feat-icon">🌍</div><div class="feat-title">24/7 Online</div><div class="feat-desc">Always running</div></div>
+  </div>
+
+  <div class="footer">ScottyMd v2.0 &nbsp;•&nbsp; © Scotty &nbsp;•&nbsp; 100+ Commands</div>
+</div>
+
+<script>
+let timer = null;
+
+async function requestPair() {
+    const phone = document.getElementById('phone').value.trim().replace(/[^0-9]/g,'');
+    const btn   = document.getElementById('pairBtn');
+    const res   = document.getElementById('result');
+
+    if (!phone || phone.length < 7 || phone.length > 15) {
+        showError('Please enter a valid number (e.g. 263788114185)');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Generating Code...';
+    res.style.display = 'none';
+    if (timer) clearInterval(timer);
+
+    try {
+        const r = await fetch('/pair', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ phone })
+        });
+        const data = await r.json();
+
+        if (!r.ok || data.error) {
+            showError(data.error || 'Something went wrong. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = 'Get Pairing Code →';
+            return;
+        }
+
+        setStep(2);
+        showCode(data.code, phone);
+
+    } catch(e) {
+        showError('Cannot reach server. Please refresh and try again.');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Get New Code';
+}
+
+function showCode(code, phone) {
+    const res = document.getElementById('result');
+    res.style.display = 'block';
+    let t = 60;
+
+    res.innerHTML = `
+        <div class="code-card">
+            <div class="code-label">🔐 Your Pairing Code</div>
+            <div class="code-val">${code}</div>
+            <button class="copy-btn" onclick="copyCode('${code}')">📋 Copy Code</button>
+        </div>
+        <div class="how-to">
+            <p>
+                <strong>1.</strong> Open <strong>WhatsApp</strong> on your phone<br/>
+                <strong>2.</strong> Go to <strong>Settings → Linked Devices</strong><br/>
+                <strong>3.</strong> Tap <strong>Link a Device</strong><br/>
+                <strong>4.</strong> Choose <strong>Link with phone number</strong><br/>
+                <strong>5.</strong> Enter <strong>${code}</strong> ✅
+            </p>
+        </div>
+        <div class="timer">⏳ Code expires in <b id="t">${t}</b>s</div>`;
+
+    timer = setInterval(() => {
+        t--;
+        const el = document.getElementById('t');
+        if (el) el.textContent = t;
+        if (t <= 0) {
+            clearInterval(timer);
+            const timerEl = document.querySelector('.timer');
+            if (timerEl) timerEl.innerHTML = '⚠️ Code expired — click <b>Get New Code</b>';
+        }
+    }, 1000);
+
+    // Poll for success
+    pollPaired(phone);
+}
+
+function pollPaired(phone) {
+    let attempts = 0;
+    const interval = setInterval(async () => {
+        attempts++;
+        if (attempts > 60) { clearInterval(interval); return; }
+        try {
+            const r = await fetch(`/status/${phone}`);
+            const data = await r.json();
+            if (data.paired) {
+                clearInterval(interval);
+                clearInterval(timer);
+                setStep(3);
+                const res = document.getElementById('result');
+                res.innerHTML = `
+                    <div class="code-card" style="border-color:rgba(37,211,102,.6)">
+                        <div style="font-size:48px;margin-bottom:10px">🎉</div>
+                        <div class="code-label" style="font-size:14px;letter-spacing:1px">Successfully Paired!</div>
+                        <p style="color:#aaa;font-size:13px;margin-top:10px">
+                            Your bot is now connected to <b style="color:#fff">+${phone}</b><br/>
+                            Send <b style="color:var(--green)">.help</b> in WhatsApp to get started!
+                        </p>
+                    </div>`;
+            }
+        } catch {}
+    }, 3000);
+}
+
+function showError(msg) {
+    const r = document.getElementById('result');
+    r.style.display = 'block';
+    r.innerHTML = `<div class="error-box">❌ ${msg}</div>`;
+}
+
+function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        const b = document.querySelector('.copy-btn');
+        if (b) { b.innerHTML = '✅ Copied!'; setTimeout(() => b.innerHTML = '📋 Copy Code', 2000); }
+    });
+}
+
+function setStep(n) {
+    for (let i = 1; i <= 3; i++) {
+        const s = document.getElementById(`step${i}`);
+        const l = document.getElementById(`line${i}`);
+        if (!s) continue;
+        s.className = 'step-item' + (i < n ? ' done' : i === n ? ' active' : '');
+        if (l) l.className = 'step-line' + (i < n ? ' done' : '');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('phone').addEventListener('keydown', e => {
+        if (e.key === 'Enter') requestPair();
+    });
+});
+</script>
+</body>
+</html>
